@@ -31,3 +31,26 @@ export interface DaySchedule {
   ytBadge: YtBadge
   blocks: Block[]
 }
+
+export type PrepType = 'ielts' | 'gre' | 'both'
+
+export interface PrepTask {
+  id: string
+  text: string
+}
+
+export interface PrepSession {
+  id: string
+  icon: string
+  type: PrepType
+  title: string
+  time: string
+  tasks: PrepTask[]
+  resource?: string
+}
+
+export interface DayPrep {
+  key: DayKey
+  note: string
+  sessions: PrepSession[]
+}

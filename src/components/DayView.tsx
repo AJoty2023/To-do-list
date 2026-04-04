@@ -39,7 +39,7 @@ export function DayView({ day }: Props) {
       {/* Block list */}
       <div className="flex flex-col gap-3">
         {day.blocks.map((block) => (
-          <BlockCard key={block.id} block={block} />
+          <BlockCard key={block.id} block={block} dayKey={day.key} />
         ))}
       </div>
 
