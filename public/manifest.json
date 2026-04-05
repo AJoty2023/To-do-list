@@ -1,0 +1,17 @@
+{
+  "name": "Daily Routine Tracker",
+  "short_name": "Routine",
+  "description": "Personal daily routine with IELTS/GRE prep and habit tracking",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#7C3AED",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
