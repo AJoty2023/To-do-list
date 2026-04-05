@@ -20,7 +20,7 @@ function getUpcomingBlock(blocks: Block[]): Block | null {
 }
 
 function sendNotification(block: Block) {
-  if (!('Notification' in window)) return
+  if (!('Notification' in globalThis)) return
   if (Notification.permission !== 'granted') return
 
   new Notification('Daily Routine — coming up next', {

@@ -21,7 +21,7 @@ const SECTIONS: { key: Section; label: string }[] = [
 ]
 
 function requestNotificationPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
+  if ('Notification' in globalThis && Notification.permission === 'default') {
     void Notification.requestPermission()
   }
 }
