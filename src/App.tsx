@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DayTabs } from './components/DayTabs'
 import { DayView } from './components/DayView'
 import { PrepSection } from './components/PrepSection'
 import { Dashboard } from './components/Dashboard'
 import { schedule } from './data/schedule'
+import { useLiveClock } from './hooks/useCurrentBlock'
 import type { DayKey } from './types'
 
 type Section = 'routine' | 'prep' | 'dashboard'
@@ -19,23 +20,43 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: 'dashboard', label: 'Progress' },
 ]
 
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    void Notification.requestPermission()
+  }
+}
+
 export default function App() {
   const [selectedDay, setSelectedDay] = useState<DayKey>(getTodayKey())
   const [section, setSection]         = useState<Section>('routine')
+  const clock   = useLiveClock()
   const dayData = schedule.find((d) => d.key === selectedDay)!
+
+  // Request notification permission once on mount
+  useEffect(() => {
+    requestNotificationPermission()
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="max-w-2xl mx-auto px-4 py-8">
 
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-medium mb-1">Daily Routine</h1>
-          <p className="text-sm text-gray-400">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long', month: 'long', day: 'numeric',
-            })}
-          </p>
+        {/* Header with live clock */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-medium mb-1">Daily Routine</h1>
+            <p className="text-sm text-gray-400">
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long', month: 'long', day: 'numeric',
+              })}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xl font-semibold text-violet-600 dark:text-violet-400 font-mono">
+              {clock}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">live</p>
+          </div>
         </div>
 
         {/* Section toggle */}
@@ -55,7 +76,7 @@ export default function App() {
           ))}
         </div>
 
-        {/* Day tabs — hidden on dashboard */}
+        {/* Day tabs */}
         {section !== 'dashboard' && (
           <DayTabs selected={selectedDay} onChange={setSelectedDay} />
         )}

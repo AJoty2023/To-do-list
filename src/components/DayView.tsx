@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react'
 import type { DaySchedule } from '../types'
 import { BlockCard } from './BlockCard'
+import { useCurrentBlock } from '../hooks/useCurrentBlock'
 
 const ytBadgeStyle: Record<string, string> = {
   long:  'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
@@ -18,10 +20,20 @@ interface Props {
 }
 
 export function DayView({ day }: Props) {
+  const activeId  = useCurrentBlock(day.blocks)
+  const activeRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to active block when day loads
+  useEffect(() => {
+    if (activeRef.current) {
+      activeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [activeId, day.key])
+
   return (
     <div className="flex flex-col gap-4">
 
-      {/* Day badge + note banner */}
+      {/* Badge + note */}
       <div className="flex flex-col gap-2">
         <span className={`self-start text-xs font-semibold px-3 py-1 rounded-full ${ytBadgeStyle[day.ytBadge]}`}>
           {ytBadgeLabel[day.ytBadge]}
@@ -38,9 +50,18 @@ export function DayView({ day }: Props) {
 
       {/* Block list */}
       <div className="flex flex-col gap-3">
-        {day.blocks.map((block) => (
-          <BlockCard key={block.id} block={block} dayKey={day.key} />
-        ))}
+        {day.blocks.map((block) => {
+          const isActive = block.id === activeId
+          return (
+            <div key={block.id} ref={isActive ? activeRef : null}>
+              <BlockCard
+                block={block}
+                dayKey={day.key}
+                isActive={isActive}
+              />
+            </div>
+          )
+        })}
       </div>
 
     </div>

@@ -17,25 +17,76 @@ const tagMeta: Record<string, { label: string; className: string }> = {
 interface Props {
   readonly block: Block
   readonly dayKey: string
+  readonly isActive?: boolean
 }
 
-export function BlockCard({ block, dayKey }: Props) {
+// --- Style helpers (avoid nested ternaries in JSX) ---
+function getCardClass(done: boolean, isActive: boolean): string {
+  if (done) {
+    return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+  }
+
+  if (isActive) {
+    return 'bg-violet-50 dark:bg-violet-900/20 border-violet-400 dark:border-violet-500 animate-pulse-border'
+  }
+
+  return 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
+}
+
+function getTitleClass(done: boolean, isActive: boolean): string {
+  if (done) {
+    return 'line-through text-gray-400 dark:text-gray-500'
+  }
+
+  if (isActive) {
+    return 'text-violet-700 dark:text-violet-300'
+  }
+
+  return 'text-gray-900 dark:text-gray-100'
+}
+
+function getDescriptionClass(done: boolean): string {
+  return done
+    ? 'text-gray-300 dark:text-gray-600'
+    : 'text-gray-500 dark:text-gray-400'
+}
+
+function getCheckBorder(done: boolean, isActive: boolean): string {
+  if (done) return 'bg-green-500 border-green-500'
+  if (isActive) return 'border-violet-400'
+  return 'border-gray-300 dark:border-gray-600'
+}
+
+export function BlockCard({ block, dayKey, isActive = false }: Props) {
   const { done, toggle } = useHabitTracker(dayKey, block.id)
 
-return (
-  <button
-    onClick={toggle}
-    type="button"
-    className={`rounded-xl px-4 py-3 flex flex-col gap-2 cursor-pointer border transition-all duration-200 text-left ${
-      done
-        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-        : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
-    }`}
-  >
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className={`w-full text-left rounded-xl px-4 py-3 flex flex-col gap-2 cursor-pointer border-2 transition-all duration-200 ${getCardClass(
+        done,
+        isActive
+      )}`}
+    >
+      {/* Active indicator */}
+      {isActive && !done && (
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500" />
+          </span>
+          <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">
+            Now — you should be here
+          </span>
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-2">
         <span className="text-xs font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap pt-0.5">
           {block.time}
         </span>
+
         <div className="flex items-center gap-2">
           <div className="flex flex-wrap gap-1 justify-end">
             {block.tags.map((tag) => {
@@ -43,41 +94,53 @@ return (
               return (
                 <span
                   key={tag}
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${meta?.className ?? 'bg-gray-100 text-gray-600'}`}
+                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    meta?.className ?? 'bg-gray-100 text-gray-600'
+                  }`}
                 >
                   {meta?.label ?? tag}
                 </span>
               )
             })}
           </div>
-          {/* Checkbox */}
+
           <div
-            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
-              done
-                ? 'bg-green-500 border-green-500'
-                : 'border-gray-300 dark:border-gray-600'
-            }`}
+            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${getCheckBorder(
+              done,
+              isActive
+            )}`}
           >
             {done && (
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M2 6l3 3 5-5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             )}
           </div>
         </div>
       </div>
 
-      <p className={`text-sm font-semibold leading-snug transition-all duration-200 ${
-        done ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'
-      }`}>
+      <p
+        className={`text-sm font-semibold leading-snug transition-all duration-200 ${getTitleClass(
+          done,
+          isActive
+        )}`}
+      >
         {block.title}
       </p>
 
-      <p className={`text-xs leading-relaxed transition-all duration-200 ${
-        done ? 'text-gray-300 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'
-      }`}>
+      <p
+        className={`text-xs leading-relaxed transition-all duration-200 ${getDescriptionClass(
+          done
+        )}`}
+      >
         {block.description}
       </p>
-      </button>
-)
+    </button>
+  )
 }
