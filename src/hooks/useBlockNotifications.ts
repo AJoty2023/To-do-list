@@ -7,50 +7,76 @@ function getTodayKey(): DayKey {
   return map[new Date().getDay()]
 }
 
-function getUpcomingBlock(blocks: Block[]): Block | null {
-  const now = new Date()
-  const currentMinutes = now.getHours() * 60 + now.getMinutes()
-
-  // Find the next block starting within 5 minutes
-  return blocks.find((block) => {
-    const blockStart = block.startHour * 60
-    const diff = blockStart - currentMinutes
-    return diff >= 0 && diff <= 5
-  }) ?? null
+async function requestPermission(): Promise<boolean> {
+  if (!('Notification' in globalThis)) return false
+  if (Notification.permission === 'granted') return true
+  if (Notification.permission === 'denied') return false
+  const result = await Notification.requestPermission()
+  return result === 'granted'
 }
 
-function sendNotification(block: Block) {
-  if (!('Notification' in globalThis)) return
-  if (Notification.permission !== 'granted') return
+async function getServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (!('serviceWorker' in navigator)) return null
+  try {
+    return await navigator.serviceWorker.ready
+  } catch {
+    return null
+  }
+}
 
-  new Notification('Daily Routine — coming up next', {
-    body: `${block.time}\n${block.title}`,
-    icon: '/vite.svg',
-    tag: block.id, // prevents duplicate notifications for same block
+async function scheduleNotification(
+  block: Block,
+  minutesBefore: number,
+  tag: string,
+): Promise<void> {
+  const sw = await getServiceWorker()
+  if (!sw?.active) return
+
+  const now = new Date()
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+  const blockStartMinutes = block.startHour * 60
+  const targetMinutes = blockStartMinutes - minutesBefore
+  const delayMs = (targetMinutes - currentMinutes) * 60_000
+
+  if (delayMs < 0) return // already passed
+
+  sw.active.postMessage({
+    type: 'SCHEDULE_NOTIFICATION',
+    title: `Coming up in ${minutesBefore} min`,
+    body: `${block.time} — ${block.title}`,
+    delayMs,
+    tag,
   })
 }
 
-export function useBlockNotifications() {
-  const notifiedIds = useRef<Set<string>>(new Set())
+export function useBlockNotifications(): void {
+  const scheduledRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    function check() {
+    async function scheduleAll(): Promise<void> {
+      const granted = await requestPermission()
+      if (!granted) return
+
       const todayKey  = getTodayKey()
       const todayData = schedule.find((d) => d.key === todayKey)
       if (!todayData) return
 
-      const upcoming = getUpcomingBlock(todayData.blocks)
-      if (!upcoming) return
+      for (const block of todayData.blocks) {
+        const tag5  = `${block.id}-5min`
+        const tag15 = `${block.id}-15min`
 
-      // Only notify once per block per session
-      if (notifiedIds.current.has(upcoming.id)) return
-      notifiedIds.current.add(upcoming.id)
+        if (!scheduledRef.current.has(tag5)) {
+          await scheduleNotification(block, 5, tag5)
+          scheduledRef.current.add(tag5)
+        }
 
-      sendNotification(upcoming)
+        if (!scheduledRef.current.has(tag15)) {
+          await scheduleNotification(block, 15, tag15)
+          scheduledRef.current.add(tag15)
+        }
+      }
     }
 
-    check() // run immediately
-    const interval = setInterval(check, 60_000) // check every minute
-    return () => clearInterval(interval)
+    void scheduleAll()
   }, [])
 }

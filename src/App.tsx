@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { DayTabs } from './components/DayTabs'
 import { DayView } from './components/DayView'
 import { PrepSection } from './components/PrepSection'
@@ -6,7 +6,6 @@ import { Dashboard } from './components/Dashboard'
 import { ThemeToggle } from './components/ThemeToggle'
 import { useDarkMode } from './hooks/useDarkMode'
 import { useLiveClock } from './hooks/useCurrentBlock'
-import { useBlockNotifications } from './hooks/useBlockNotifications'
 import { schedule } from './data/schedule'
 import type { DayKey } from './types'
 
@@ -23,24 +22,12 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: 'dashboard', label: 'Progress' },
 ]
 
-function requestNotificationPermission() {
-  if ('Notification' in globalThis && Notification.permission === 'default') {
-    void Notification.requestPermission()
-  }
-}
-
 export default function App() {
   const [selectedDay, setSelectedDay] = useState<DayKey>(getTodayKey())
   const [section, setSection]         = useState<Section>('routine')
   const { isDark, toggle }            = useDarkMode()
   const clock                         = useLiveClock()
   const dayData = schedule.find((d) => d.key === selectedDay)!
-
-  useBlockNotifications()
-
-  useEffect(() => {
-    requestNotificationPermission()
-  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -60,7 +47,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 ml-3 shrink-0">
-            {/* Live clock */}
+            {/* Live clock — desktop */}
             <div className="text-right hidden sm:block">
               <p className="text-lg font-semibold text-violet-600 dark:text-violet-400 font-mono">
                 {clock}
@@ -73,7 +60,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Live clock — mobile only (shown below header) */}
+        {/* Live clock — mobile only */}
         <div className="sm:hidden text-center mb-4">
           <p className="text-lg font-semibold text-violet-600 dark:text-violet-400 font-mono">
             {clock}
