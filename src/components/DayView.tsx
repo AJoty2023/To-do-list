@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { DaySchedule } from '../types'
 import { BlockCard } from './BlockCard'
+import { CoreTasks } from './CoreTasks'
+import { DayModeToggle } from './DayModeToggle'
 import { useCurrentBlock } from '../hooks/useCurrentBlock'
+import { useDayMode } from '../hooks/useDayMode'
 
 const ytBadgeStyle: Record<string, string> = {
   long:  'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
@@ -20,20 +23,29 @@ interface Props {
 }
 
 export function DayView({ day }: Props) {
-  const activeId  = useCurrentBlock(day.blocks)
-  const activeRef = useRef<HTMLDivElement>(null)
+  const activeId      = useCurrentBlock(day.blocks)
+  const activeRef     = useRef<HTMLDivElement>(null)
+  const { mode, setMode } = useDayMode()
 
-  // Auto-scroll to active block when day loads
+  // Auto-scroll to active block
   useEffect(() => {
     if (activeRef.current) {
       activeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }, [activeId, day.key])
 
+  // In flexible or off mode, only show blocks tagged as non-negotiable
+  // (meal and prayer blocks are always shown as they are life basics)
+  const visibleBlocks = mode === 'normal'
+    ? day.blocks
+    : day.blocks.filter((b) =>
+        b.tags.some((t) => ['meal', 'prayer', 'morning'].includes(t))
+      )
+
   return (
     <div className="flex flex-col gap-4">
 
-      {/* Badge + note */}
+      {/* YouTube badge + day note */}
       <div className="flex flex-col gap-2">
         <span className={`self-start text-xs font-semibold px-3 py-1 rounded-full ${ytBadgeStyle[day.ytBadge]}`}>
           {ytBadgeLabel[day.ytBadge]}
@@ -48,21 +60,55 @@ export function DayView({ day }: Props) {
         </div>
       </div>
 
-      {/* Block list */}
-      <div className="flex flex-col gap-3">
-        {day.blocks.map((block) => {
-          const isActive = block.id === activeId
-          return (
-            <div key={block.id} ref={isActive ? activeRef : null}>
-              <BlockCard
-                block={block}
-                dayKey={day.key}
-                isActive={isActive}
-              />
-            </div>
-          )
-        })}
+      {/* Day mode toggle */}
+      <DayModeToggle mode={mode} onModeChange={setMode} />
+
+      {/* Core tasks — always shown */}
+      <CoreTasks dayKey={day.key} mode={mode} />
+
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+        <span className="text-xs text-gray-400 dark:text-gray-600 font-medium">
+          {mode === 'normal' ? 'Full routine' : 'Essentials only'}
+        </span>
+        <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
       </div>
+
+      {/* Routine blocks — filtered by mode */}
+      {mode === 'off' ? (
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-6 text-center border border-gray-100 dark:border-gray-800">
+          <p className="text-sm font-medium text-gray-400 dark:text-gray-500">
+            Day off — routine hidden
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+            Rest well. Core tasks above are still available.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {visibleBlocks.map((block) => {
+            const isActive = block.id === activeId
+            return (
+              <div key={block.id} ref={isActive ? activeRef : null}>
+                <BlockCard
+                  block={block}
+                  dayKey={day.key}
+                  isActive={isActive}
+                />
+              </div>
+            )
+          })}
+
+          {mode === 'flexible' && visibleBlocks.length === 0 && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-4 text-center border border-amber-100 dark:border-amber-800">
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                No essential blocks for this day
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
     </div>
   )
