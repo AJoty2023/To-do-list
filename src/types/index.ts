@@ -54,3 +54,13 @@ export interface DayPrep {
   note: string
   sessions: PrepSession[]
 }
+
+export interface CustomBlock {
+  id: string
+  dayKey: DayKey
+  time: string
+  title: string
+  description: string
+  tags: Tag[]
+  createdAt: string
+}

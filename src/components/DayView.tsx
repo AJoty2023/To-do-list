@@ -1,10 +1,13 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { DaySchedule } from '../types'
 import { BlockCard } from './BlockCard'
 import { CoreTasks } from './CoreTasks'
 import { DayModeToggle } from './DayModeToggle'
+import { CustomBlockCard } from './CustomBlockCard'
+import { CustomBlockEditor } from './CustomBlockEditor'
 import { useCurrentBlock } from '../hooks/useCurrentBlock'
 import { useDayMode } from '../hooks/useDayMode'
+import { useCustomBlocks } from '../hooks/useCustomBlocks'
 
 const ytBadgeStyle: Record<string, string> = {
   long:  'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
@@ -23,19 +26,18 @@ interface Props {
 }
 
 export function DayView({ day }: Props) {
-  const activeId      = useCurrentBlock(day.blocks)
-  const activeRef     = useRef<HTMLDivElement>(null)
-  const { mode, setMode } = useDayMode()
+  const activeId              = useCurrentBlock(day.blocks)
+  const activeRef             = useRef<HTMLDivElement>(null)
+  const { mode, setMode }     = useDayMode()
+  const { blocks: customBlocks, add, remove } = useCustomBlocks(day.key)
+  const [showEditor, setShowEditor] = useState(false)
 
-  // Auto-scroll to active block
   useEffect(() => {
     if (activeRef.current) {
       activeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }, [activeId, day.key])
 
-  // In flexible or off mode, only show blocks tagged as non-negotiable
-  // (meal and prayer blocks are always shown as they are life basics)
   const visibleBlocks = mode === 'normal'
     ? day.blocks
     : day.blocks.filter((b) =>
@@ -45,7 +47,7 @@ export function DayView({ day }: Props) {
   return (
     <div className="flex flex-col gap-4">
 
-      {/* YouTube badge + day note */}
+      {/* Badge + day note */}
       <div className="flex flex-col gap-2">
         <span className={`self-start text-xs font-semibold px-3 py-1 rounded-full ${ytBadgeStyle[day.ytBadge]}`}>
           {ytBadgeLabel[day.ytBadge]}
@@ -63,7 +65,7 @@ export function DayView({ day }: Props) {
       {/* Day mode toggle */}
       <DayModeToggle mode={mode} onModeChange={setMode} />
 
-      {/* Core tasks — always shown */}
+      {/* Core tasks */}
       <CoreTasks dayKey={day.key} mode={mode} />
 
       {/* Divider */}
@@ -75,7 +77,7 @@ export function DayView({ day }: Props) {
         <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
       </div>
 
-      {/* Routine blocks — filtered by mode */}
+      {/* Routine blocks */}
       {mode === 'off' ? (
         <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-6 text-center border border-gray-100 dark:border-gray-800">
           <p className="text-sm font-medium text-gray-400 dark:text-gray-500">
@@ -109,6 +111,50 @@ export function DayView({ day }: Props) {
           )}
         </div>
       )}
+
+      {/* Custom blocks section */}
+      <div className="flex flex-col gap-3">
+
+        {/* Custom section header */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+          <span className="text-xs text-gray-400 dark:text-gray-600 font-medium">
+            your additions
+          </span>
+          <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+        </div>
+
+        {/* Existing custom blocks */}
+        {customBlocks.length > 0 && (
+          <div className="flex flex-col gap-3">
+            {customBlocks.map((block) => (
+              <CustomBlockCard
+                key={block.id}
+                block={block}
+                onDelete={remove}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Editor or add button */}
+        {showEditor ? (
+          <CustomBlockEditor
+            onAdd={(input) => {
+              add(input)
+              setShowEditor(false)
+            }}
+            onCancel={() => setShowEditor(false)}
+          />
+        ) : (
+          <button
+            onClick={() => setShowEditor(true)}
+            className="w-full py-2.5 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-sm text-gray-400 dark:text-gray-500 hover:border-violet-300 dark:hover:border-violet-700 hover:text-violet-500 dark:hover:text-violet-400 transition-all"
+          >
+            + add a block to this day
+          </button>
+        )}
+      </div>
 
     </div>
   )
