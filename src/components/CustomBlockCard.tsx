@@ -45,10 +45,11 @@ export function CustomBlockCard({ block, onDelete }: Props) {
   }
 
   return (
-    <div
-      onClick={toggle}
-      className={`rounded-xl px-4 py-3 flex flex-col gap-2 cursor-pointer border-2 transition-all duration-200 ${getCardClass(done)}`}
-    >
+<button
+  type="button"
+  onClick={toggle}
+  className={`w-full text-left rounded-xl px-4 py-3 flex flex-col gap-2 border-2 transition-all duration-200 ${getCardClass(done)}`}
+>
       {/* Custom badge + delete button */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
@@ -105,6 +106,6 @@ export function CustomBlockCard({ block, onDelete }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </button>
   )
 }
