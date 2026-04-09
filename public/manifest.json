@@ -1,33 +1,45 @@
 {
   "name": "Daily Routine Tracker",
   "short_name": "Routine",
-  "description": "Personal daily routine with IELTS/GRE prep, habit tracking, and progress dashboard",
+  "description": "Personal daily routine tracker with IELTS/GRE prep, habit tracking, progress dashboard, and smart notifications.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f9fafb",
   "theme_color": "#7C3AED",
   "categories": ["productivity", "lifestyle"],
+
   "icons": [
     {
-      "src": "/vite.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icon_192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [],
+
   "shortcuts": [
     {
-      "name": "Today's routine",
+      "name": "Today's Routine",
       "short_name": "Today",
       "description": "Open today's routine",
       "url": "/?tab=routine"
     },
     {
-      "name": "Progress",
+      "name": "Progress Dashboard",
       "short_name": "Progress",
-      "description": "View weekly progress",
+      "description": "View your weekly progress",
       "url": "/?tab=dashboard"
     }
   ]
