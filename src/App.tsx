@@ -4,8 +4,10 @@ import { DayView } from './components/DayView'
 import { PrepSection } from './components/PrepSection'
 import { Dashboard } from './components/Dashboard'
 import { ThemeToggle } from './components/ThemeToggle'
+import { WeeklySummary } from './components/WeeklySummary'
 import { useDarkMode } from './hooks/useDarkMode'
 import { useLiveClock } from './hooks/useCurrentBlock'
+import { useWeeklySummary } from './hooks/useWeeklySummary'
 import { schedule } from './data/schedule'
 import type { DayKey } from './types'
 
@@ -27,7 +29,13 @@ export default function App() {
   const [section, setSection]         = useState<Section>('routine')
   const { isDark, toggle }            = useDarkMode()
   const clock                         = useLiveClock()
+  const weeklySummary                 = useWeeklySummary()
   const dayData = schedule.find((d) => d.key === selectedDay)!
+
+  const showWeeklySummary =
+    weeklySummary.isSunday &&
+    section === 'routine' &&
+    selectedDay === 'sun'
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -47,20 +55,17 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 ml-3 shrink-0">
-            {/* Live clock — desktop */}
             <div className="text-right hidden sm:block">
               <p className="text-lg font-semibold text-violet-600 dark:text-violet-400 font-mono">
                 {clock}
               </p>
               <p className="text-xs text-gray-400">live</p>
             </div>
-
-            {/* Theme toggle */}
             <ThemeToggle isDark={isDark} onToggle={toggle} />
           </div>
         </div>
 
-        {/* Live clock — mobile only */}
+        {/* Live clock — mobile */}
         <div className="sm:hidden text-center mb-4">
           <p className="text-lg font-semibold text-violet-600 dark:text-violet-400 font-mono">
             {clock}
@@ -88,6 +93,9 @@ export default function App() {
         {section !== 'dashboard' && (
           <DayTabs selected={selectedDay} onChange={setSelectedDay} />
         )}
+
+        {/* Weekly summary — Sunday only, routine tab, sun day selected */}
+        {showWeeklySummary && <WeeklySummary data={weeklySummary} />}
 
         {/* Content */}
         {section === 'routine'   && <DayView day={dayData} />}
