@@ -2,46 +2,39 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-
-    <link rel="manifest" href="/manifest.json" />
-
-    <meta name="theme-color" content="#7C3AED" />
-
-    <!-- Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- SEO / PWA -->
     <title>Daily Routine Tracker</title>
-    <meta
-      name="description"
-      content="Personal daily routine tracker with IELTS/GRE prep schedule, habit tracking, and progress dashboard."
-    />
+    <meta name="description" content="Personal daily routine tracker with IELTS/GRE prep, habit tracking, progress dashboard, and smart notifications." />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#7C3AED" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Routine" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
 
     <!-- Prevent dark mode flash -->
     <script>
       (function () {
         try {
-          var stored = localStorage.getItem('theme');
-          var systemDark = globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
-
-          if (stored === 'dark' || (!stored && systemDark)) {
-            document.documentElement.classList.add('dark');
+          var stored = localStorage.getItem('theme')
+          if (
+            stored === 'dark' ||
+            (!stored && globalThis.matchMedia('(prefers-color-scheme: dark)').matches)
+          ) {
+            document.documentElement.classList.add('dark')
           }
-        } catch (e) {
-           console.warn('Theme init failed:', e);
-        }
-      })();
+        } catch (e) {console.error(e)}
+      })()
     </script>
   </head>
-
   <body>
     <div id="root"></div>
-
-    <!-- React entry -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
