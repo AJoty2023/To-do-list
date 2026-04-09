@@ -5,9 +5,11 @@ import { CoreTasks } from './CoreTasks'
 import { DayModeToggle } from './DayModeToggle'
 import { CustomBlockCard } from './CustomBlockCard'
 import { CustomBlockEditor } from './CustomBlockEditor'
+import { RecoveryBanner } from './RecoveryBanner'
 import { useCurrentBlock } from '../hooks/useCurrentBlock'
 import { useDayMode } from '../hooks/useDayMode'
 import { useCustomBlocks } from '../hooks/useCustomBlocks'
+import { useStreakProtection } from '../hooks/useStreakProtection'
 
 const ytBadgeStyle: Record<string, string> = {
   long:  'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
@@ -21,16 +23,23 @@ const ytBadgeLabel: Record<string, string> = {
   off:   'YouTube off day',
 }
 
+function getTodayKey(): string {
+  const map = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+  return map[new Date().getDay()]
+}
+
 interface Props {
   readonly day: DaySchedule
 }
 
 export function DayView({ day }: Props) {
-  const activeId              = useCurrentBlock(day.blocks)
-  const activeRef             = useRef<HTMLDivElement>(null)
-  const { mode, setMode }     = useDayMode()
+  const activeId                      = useCurrentBlock(day.blocks)
+  const activeRef                     = useRef<HTMLDivElement>(null)
+  const { mode, setMode }             = useDayMode()
   const { blocks: customBlocks, add, remove } = useCustomBlocks(day.key)
-  const [showEditor, setShowEditor] = useState(false)
+  const [showEditor, setShowEditor]   = useState(false)
+  const recovery                      = useStreakProtection()
+  const isToday                       = day.key === getTodayKey()
 
   useEffect(() => {
     if (activeRef.current) {
@@ -46,6 +55,11 @@ export function DayView({ day }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
+
+      {/* Recovery banner — only on today's view */}
+      {isToday && recovery.isRecoveryDay && (
+        <RecoveryBanner recovery={recovery} />
+      )}
 
       {/* Badge + day note */}
       <div className="flex flex-col gap-2">
@@ -112,10 +126,8 @@ export function DayView({ day }: Props) {
         </div>
       )}
 
-      {/* Custom blocks section */}
+      {/* Custom blocks */}
       <div className="flex flex-col gap-3">
-
-        {/* Custom section header */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
           <span className="text-xs text-gray-400 dark:text-gray-600 font-medium">
@@ -124,7 +136,6 @@ export function DayView({ day }: Props) {
           <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
         </div>
 
-        {/* Existing custom blocks */}
         {customBlocks.length > 0 && (
           <div className="flex flex-col gap-3">
             {customBlocks.map((block) => (
@@ -137,7 +148,6 @@ export function DayView({ day }: Props) {
           </div>
         )}
 
-        {/* Editor or add button */}
         {showEditor ? (
           <CustomBlockEditor
             onAdd={(input) => {
