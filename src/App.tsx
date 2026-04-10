@@ -10,6 +10,7 @@ import { useLiveClock } from './hooks/useCurrentBlock'
 import { useWeeklySummary } from './hooks/useWeeklySummary'
 import { schedule } from './data/schedule'
 import type { DayKey } from './types'
+import { Test } from './components/test'
 
 type Section = 'routine' | 'prep' | 'dashboard'
 
@@ -88,6 +89,7 @@ export default function App() {
             </button>
           ))}
         </div>
+        <Test />
 
         {/* Day tabs */}
         {section !== 'dashboard' && (
