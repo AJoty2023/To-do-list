@@ -10,6 +10,7 @@ import { useCurrentBlock } from '../hooks/useCurrentBlock'
 import { useDayMode } from '../hooks/useDayMode'
 import { useCustomBlocks } from '../hooks/useCustomBlocks'
 import { useStreakProtection } from '../hooks/useStreakProtection'
+import { MorningCoach } from './MorningCoach'
 
 const ytBadgeStyle: Record<string, string> = {
   long:  'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
@@ -125,6 +126,17 @@ export function DayView({ day }: Props) {
           )}
         </div>
       )}
+
+      {/* Recovery banner — only on today's view */}
+{isToday && recovery.isRecoveryDay && (
+  <RecoveryBanner recovery={recovery} />
+)}
+
+{/* AI morning coach — today only */}
+{isToday && <MorningCoach />}
+
+{/* Badge + day note */}
+<div className="flex flex-col gap-2"></div>
 
       {/* Custom blocks */}
       <div className="flex flex-col gap-3">
