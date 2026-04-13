@@ -20,8 +20,14 @@ function getTodayISO(): string {
   return new Date().toISOString().split('T')[0]
 }
 
+// Cache key includes the date — auto-invalidates next day
 function getCacheKey(): string {
   return `morning-coach:${getTodayISO()}`
+}
+
+// Separate key to track if today's call already succeeded
+function getSuccessKey(): string {
+  return `morning-coach-done:${getTodayISO()}`
 }
 
 function getHabitValue(dayKey: DayKey, blockId: string, dateISO: string): boolean {
@@ -50,11 +56,9 @@ function getYesterdayInfo(): { key: DayKey; dateISO: string } {
 function calcRoutinePercent(dayKey: DayKey, dateISO: string): number {
   const daySchedule = schedule.find((d) => d.key === dayKey)
   if (!daySchedule || daySchedule.blocks.length === 0) return 0
-
   const done = daySchedule.blocks.filter((b) =>
     getHabitValue(dayKey, b.id, dateISO)
   ).length
-
   return Math.round((done / daySchedule.blocks.length) * 100)
 }
 
@@ -70,6 +74,16 @@ function getTimeOfDay(): string {
   if (hour < 12) return 'morning'
   if (hour < 17) return 'afternoon'
   return 'evening'
+}
+
+function isValidCachedMessage(value: string | null): boolean {
+  if (!value) return false
+  // Reject anything that looks like an error string
+  if (value.startsWith('Could not')) return false
+  if (value.startsWith('Rate limit')) return false
+  if (value.startsWith('Gemini API error')) return false
+  if (value.length < 20) return false
+  return true
 }
 
 function buildPromptContext(): string {
@@ -104,17 +118,28 @@ export function useMorningCoach(): MorningCoachState {
   const [error, setError]     = useState<string | null>(null)
 
   async function fetchMessage(force = false): Promise<void> {
-    // Check cache first — one call per day unless forced
+    // If not forced — check for a valid cached message first
     if (!force) {
       try {
-        const cached = localStorage.getItem(getCacheKey())
-        if (cached) {
-          setMessage(cached)
+        const alreadyDone = localStorage.getItem(getSuccessKey())
+        const cached      = localStorage.getItem(getCacheKey())
+
+        // Only use cache if it was a successful response
+        if (alreadyDone === 'true' && isValidCachedMessage(cached)) {
+          setMessage(cached!)
           return
         }
       } catch {
-        // continue to fetch
+        // localStorage unavailable — continue to fetch
       }
+    }
+
+    // Clear any previous error or stale cached error string
+    try {
+      localStorage.removeItem(getCacheKey())
+      localStorage.removeItem(getSuccessKey())
+    } catch {
+      // ignore
     }
 
     setLoading(true)
@@ -140,14 +165,16 @@ Tone: warm, direct, personal. Never cheesy or overly enthusiastic.`
 
       setMessage(result)
 
+      // Cache the successful response + mark today as done
       try {
         localStorage.setItem(getCacheKey(), result)
+        localStorage.setItem(getSuccessKey(), 'true')
       } catch {
         // storage full — ignore
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      setError(`Could not load coach message: ${msg}`)
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -155,6 +182,7 @@ Tone: warm, direct, personal. Never cheesy or overly enthusiastic.`
 
   useEffect(() => {
     void fetchMessage(false)
+
   }, [])
 
   function refresh(): void {
